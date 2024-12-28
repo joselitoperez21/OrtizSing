@@ -1,0 +1,323 @@
+
+body {
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    background-color: #f8f9fa; /* Cambia esto al color que desees */
+    color: #343a40; /* Cambia esto al color que desees para el texto */
+    margin: 0px;
+    padding: 0px;
+    margin-top: 20px;
+    
+  }
+  
+  
+  .divprincipal {
+    border: 15px ;
+    
+  }
+  header  {
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+      padding: 0 1rem;
+      position: absolute;
+      top: 2rem; 
+      left: 2rem;
+      
+  }
+  
+  .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%; 
+  }
+  
+  .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%; 
+  }
+  footer {
+      background-color: black;
+      bottom: 0;
+      width: 100%;
+      height: 40px;
+      color: white;
+  }
+  
+  .card {
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+      max-width: 300px;
+      margin: auto;
+      text-align: center;
+  }
+    .title {
+      color: grey;
+      font-size: 18px;
+    }
+    a {
+      text-decoration: none;
+      font-size: 22px;
+      color: black;
+    }
+    ul li:hover {
+    background-color: #27A0BB ;
+    border-radius: 5px;
+  }
+  ul li {
+    cursor: pointer;
+  }
+    button:hover, a:hover {
+      opacity: 0.7;
+    }
+  
+  .ConP {
+    margin: auto;  
+    padding: 20px;
+  }
+  h2 {
+    text-align: left;
+    color: #000000;
+  }
+  
+  /* Add circular styles to the scrollToTopButton
+  #scrollToTopButton {
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    background-color: black;
+  } */
+  #Imglogos {
+    width: 202.5px;
+    height: 203px;
+    margin: 100 auto;
+    bottom: 200px;
+  
+  }
+  .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      /* Compensate for excess margin on outer gallery flex items */
+      margin: -1rem -1rem;
+  }
+  
+  .gallery-item {
+      /* Minimum width of 24rem and grow to fit available space */
+      flex: 1 0 24rem;
+      /* Margin value should be half of grid-gap value as margins on flex items don't collapse */
+      margin: 1rem;
+      box-shadow: 0.3rem 0.4rem 0.4rem rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+  }
+  
+  .gallery-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 400ms ease-out;
+  }
+  
+  .gallery-image:hover {
+      transform: scale(1.15);
+  }
+  
+  /*
+  
+  The following rule will only run if your browser supports CSS grid.
+  
+  Remove or comment-out the code block below to see how the browser will fall-back to flexbox styling. 
+  
+  */
+  
+  @supports (display: grid) {
+      .gallery {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+          grid-gap: 2rem;
+      }
+  
+      .gallery,
+      .gallery-item {
+          margin: 0;
+      }
+  }
+  
+  ul li {
+    cursor: pointer;
+  }
+  #footer {
+    font-size: 20px;
+  }
+  .card {
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+      max-width: 300px;
+      margin: auto;
+      text-align: center;
+  }
+    .title {
+      color: grey;
+      font-size: 18px;
+    }
+    a {
+      text-decoration: none;
+      font-size: 22px;
+      color: black;
+    }
+    ul li:hover {
+    background-color: #27A0BB ;
+    border-radius: 5px;
+  }
+  ul li {
+    cursor: pointer;
+  }
+    button:hover, a:hover {
+      opacity: 0.7;
+    }
+  /* div que mantiende todo el la caja */
+  #divprincipal {
+    margin: 80px;
+  }
+  h2 {
+    text-align: left;
+    color: #000000;
+  }
+  
+  /* Add circular styles to the scrollToTopButton */
+  #scrollToTopButton {
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    background-color: black;
+  }
+  
+  .gallery {
+      display: flex;
+    margin: 100 auto;
+      flex-wrap: wrap;
+      /* Compensate for excess margin on outer gallery flex items */
+      margin: -1rem -1rem;
+  }
+  
+  .gallery-item {
+      /* Minimum width of 24rem and grow to fit available space */
+      flex: 1 0 24rem;
+      /* Margin value should be half of grid-gap value as margins on flex items don't collapse */
+      margin: 1rem;
+      box-shadow: 0.3rem 0.4rem 0.4rem rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+  }
+  
+  .gallery-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 400ms ease-out;
+  }
+  
+  .gallery-image:hover {
+      transform: scale(1.15);
+  }
+  
+  /*
+  
+  The following rule will only run if your browser supports CSS grid.
+  
+  Remove or comment-out the code block below to see how the browser will fall-back to flexbox styling. 
+  
+  */
+  
+  @supports (display: grid) {
+      .gallery {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+          grid-gap: 2rem;
+      }
+  
+      .gallery,
+      .gallery-item {
+          margin: 0;
+      }
+  }
+  p {
+    font-family: Arial, sans-serif;
+    font-size: 30px;
+  }
+  
+  ul li {
+    cursor: pointer;
+  }
+  #footer {
+    font-size: 20px;
+  }
+  /* Image Slider */
+  .slider{
+    background-image: url(logos.jpeg);
+    background-size: 100% 100%;
+    width:100%;
+    height: 460px;
+    animation: slider 35s infinite linear;
+  }
+  
+  /* Definición de la animación */
+  @keyframes slider {
+    0% {
+      background-image: url('../img/logos.jpeg');
+    }
+    9.090% {
+      background-image: url('../img/Ortizcarta.png');
+    }
+    18.181% {
+      background-image: url('../img/OrtizDiaNacional.jpeg');
+    }
+    27.272% {
+      background-image: url('../img/tituanas.jpg');
+    }
+    36.363% {
+      background-image: url('../img/margarita.png');
+    }
+    45.454% {
+      background-image: url('../img/OrtizNacional.jpeg');
+    }
+    54.545% {
+      background-image: url('../img/74490806_212125556452969_1458104898381614497_n.jpg');
+    }
+    63.636% {
+      background-image: url('../img/RestauraciónENCRISTO.png');
+    }
+    72.727% {
+      background-image: url('../img/OrtizDiaNacional.jpeg');
+    }
+    81.818% {
+      background-image: url('../img/carteles.jpeg');
+    }
+    90.909% {
+      background-image: url('../img/download.png');
+    }
+    100% {
+      background-image: url('../img/logos.jpeg'); 
+    }
+  }
+  
+  /* Aplicación de la animación al elemento deseado */
+  .elemento-con-fondo {
+    width: 100%;
+    height: 400px;
+    animation: slider 10s infinite; /* 10 segundos de duración, repetición infinita */
+  }
+  #contacto {
+    background-color: #ffffff;
+    padding: 30px;
+    margin: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    font-family: 'Times New Roman', serif;
+    font-size: 18px;
+    line-height: 1.5;
+    border: 1px solid #ddd;
+  }
+  
+  
