@@ -1,4 +1,5 @@
 const STORAGE_KEY = "ortizsigns_owner_profile_v1";
+const API_PROFILE_ENDPOINT = "/api/profile";
 
 const defaultProfile = {
   ownerName: "Daniel Orama",
@@ -26,6 +27,7 @@ const defaultProfile = {
   phone: "939-638-0678",
   whatsapp: "19396380678",
   address: "Puerto Rico",
+  mapEmbedUrl: "",
   youtubeUrl: "https://www.youtube.com/@DanielOrama_95",
   ownerPhoto: "/img/ortizlogo.png",
   showSlideshow: true,
@@ -47,21 +49,30 @@ const defaultProfile = {
   ]
 };
 
+function normalizeProfile(raw) {
+  const merged = { ...defaultProfile, ...(raw ?? {}) };
+  return {
+    ...merged,
+    services: Array.isArray(merged.services) ? merged.services : defaultProfile.services,
+    gallery: Array.isArray(merged.gallery) ? merged.gallery : defaultProfile.gallery,
+    slideshowPhotos: Array.isArray(merged.slideshowPhotos)
+      ? merged.slideshowPhotos
+      : defaultProfile.slideshowPhotos,
+    showSlideshow: typeof merged.showSlideshow === "boolean" ? merged.showSlideshow : true
+  };
+}
+
 function loadProfile() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return defaultProfile;
     const parsed = JSON.parse(saved);
-    const merged = { ...defaultProfile, ...parsed };
+    const merged = normalizeProfile(parsed);
 
     // Backward compatibility: if old saved data doesn't include slideshowPhotos,
     // initialize it from gallery so owner can edit the currently visible slides.
     if (!Object.prototype.hasOwnProperty.call(parsed, "slideshowPhotos")) {
       merged.slideshowPhotos = (merged.gallery ?? []).slice(0, 8);
-    }
-
-    if (typeof merged.showSlideshow !== "boolean") {
-      merged.showSlideshow = true;
     }
 
     // Update legacy contact data to current official data when old defaults are detected.
@@ -73,6 +84,15 @@ function loadProfile() {
     }
     if (!parsed.whatsapp || parsed.whatsapp === "17874521800") {
       merged.whatsapp = defaultProfile.whatsapp;
+    }
+    if (!parsed.heroTitle || hasLegacyTechTerms(parsed.heroTitle)) {
+      merged.heroTitle = defaultProfile.heroTitle;
+    }
+    if (!parsed.heroText || hasLegacyTechTerms(parsed.heroText)) {
+      merged.heroText = defaultProfile.heroText;
+    }
+    if (!parsed.aboutText || hasLegacyTechTerms(parsed.aboutText)) {
+      merged.aboutText = defaultProfile.aboutText;
     }
 
     return merged;
@@ -96,6 +116,13 @@ function toMultiline(value) {
   return value.join("\n");
 }
 
+function hasLegacyTechTerms(text) {
+  if (!text) return false;
+  return /(inform[aá]tic|soporte t[eé]cnic|computador|redes|impresoras|tecnolog[ií]a|presencia digital)/i.test(
+    text
+  );
+}
+
 import { useEffect, useMemo, useState } from "react";
 
 export default function App() {
@@ -106,6 +133,7 @@ export default function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [isSyncingProfile, setIsSyncingProfile] = useState(false);
 
   const [form, setForm] = useState(() => {
     const initial = loadProfile();
@@ -136,6 +164,7 @@ export default function App() {
     if (profile.gallery?.length) return profile.gallery;
     return slides;
   }, [profile.gallery, slides]);
+  const hasMap = Boolean(profile.mapEmbedUrl?.trim());
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -156,6 +185,35 @@ export default function App() {
     const timer = setTimeout(() => setLogoTapCount(0), 1800);
     return () => clearTimeout(timer);
   }, [logoTapCount]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchGlobalProfile = async () => {
+      try {
+        const response = await fetch(API_PROFILE_ENDPOINT, { method: "GET" });
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!payload?.profile || ignore) return;
+
+        const normalized = normalizeProfile(payload.profile);
+        setProfile(normalized);
+        setForm({
+          ...normalized,
+          servicesText: toMultiline(normalized.services)
+        });
+        saveProfile(normalized);
+      } catch {
+        // Keep local fallback when API is unavailable.
+      }
+    };
+
+    fetchGlobalProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (lightboxIndex < 0) return;
@@ -275,15 +333,33 @@ export default function App() {
     setForm((prev) => ({ ...prev, slideshowPhotos: [] }));
   };
 
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault();
-    const nextProfile = {
+    const nextProfile = normalizeProfile({
       ...form,
       services: toServiceArray(form.servicesText)
-    };
+    });
     setProfile(nextProfile);
     saveProfile(nextProfile);
-    alert("Informacion guardada correctamente.");
+
+    try {
+      setIsSyncingProfile(true);
+      const response = await fetch(API_PROFILE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile: nextProfile, pin })
+      });
+
+      if (!response.ok) {
+        throw new Error("global-save-failed");
+      }
+
+      alert("Información guardada y publicada para todos.");
+    } catch {
+      alert("Se guardó en este dispositivo, pero falló publicar globalmente.");
+    } finally {
+      setIsSyncingProfile(false);
+    }
   };
 
   const openLightboxBySrc = (src) => {
@@ -321,7 +397,7 @@ export default function App() {
       </header>
 
       <section className="header">
-        <div>
+        <div className="hero-content">
           <p className="eyebrow">SIGNS, DISEÑO Y ROTULACIÓN PROFESIONAL</p>
           <h1>{profile.businessName}</h1>
           <p className="hero-title">{profile.heroTitle}</p>
@@ -379,11 +455,14 @@ export default function App() {
 
         <section className="panel">
           <h2>Nuestros servicios</h2>
-          <ul>
+          <div className="service-cards">
             {profile.services.map((service) => (
-              <li key={service}>{service}</li>
+              <article className="service-card" key={service}>
+                <h3>{service}</h3>
+                <p>Trabajo personalizado, materiales de calidad y entrega profesional.</p>
+              </article>
             ))}
-          </ul>
+          </div>
         </section>
 
         <section className="panel split">
@@ -417,7 +496,7 @@ export default function App() {
             <h2>Contacto</h2>
             <p>Nos especializamos en toda clase de rótulos. Cotizaciones sin compromiso.</p>
           </div>
-          <div className="contact-grid">
+          <div className={`contact-grid ${hasMap ? "with-map" : "no-map"}`}>
             <div className="contact-list">
               <article className="contact-item">
                 <span className="contact-label">Email</span>
@@ -456,6 +535,20 @@ export default function App() {
                 </a>
               </article>
             </div>
+            {hasMap ? (
+              <aside className="contact-map-card">
+                <h3>Ubicación</h3>
+                <p>Consulta la zona y coordina instalación o visita por cita.</p>
+                <div className="contact-map-frame">
+                  <iframe
+                    src={profile.mapEmbedUrl}
+                    title="Mapa de ubicación Ortiz Signs"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </aside>
+            ) : null}
           </div>
         </section>
       </main>
@@ -555,6 +648,11 @@ export default function App() {
               </label>
 
               <label>
+                URL mapa (Google embed, opcional)
+                <input value={form.mapEmbedUrl} onChange={(e) => handleInput("mapEmbedUrl", e.target.value)} />
+              </label>
+
+              <label>
                 URL de YouTube
                 <input value={form.youtubeUrl} onChange={(e) => handleInput("youtubeUrl", e.target.value)} />
               </label>
@@ -648,7 +746,9 @@ export default function App() {
                 Borrar todas las fotos
               </button>
 
-              <button type="submit">Guardar cambios</button>
+              <button type="submit" disabled={isSyncingProfile}>
+                {isSyncingProfile ? "Publicando..." : "Guardar cambios"}
+              </button>
             </form>
           )}
         </aside>

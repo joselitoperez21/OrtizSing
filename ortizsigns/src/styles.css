@@ -91,6 +91,13 @@ h1 {
 .hero-text {
   max-width: 70ch;
   color: var(--muted);
+  line-height: 1.45;
+}
+
+.hero-content {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
 }
 
 .hero-actions {
@@ -196,8 +203,15 @@ h1 {
 
 .contact-grid {
   display: grid;
-  grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+.contact-grid.with-map {
+  grid-template-columns: 1.3fr 1fr;
+}
+
+.contact-grid.no-map {
+  grid-template-columns: 1fr;
 }
 
 .contact-list {
@@ -229,6 +243,60 @@ h1 {
   text-transform: uppercase;
   color: #475569;
   margin-bottom: 0.25rem;
+}
+
+.contact-map-card {
+  border: 1px solid #dbe1ea;
+  border-radius: 0.8rem;
+  background: #ffffff;
+  padding: 0.85rem;
+}
+
+.contact-map-card h3 {
+  margin: 0 0 0.2rem;
+}
+
+.contact-map-card p {
+  margin: 0 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.contact-map-frame {
+  border-radius: 0.7rem;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+}
+
+.contact-map-frame iframe {
+  width: 100%;
+  height: 320px;
+  border: 0;
+  display: block;
+}
+
+.service-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.service-card {
+  border: 1px solid #dbe1ea;
+  border-radius: 0.8rem;
+  background: #fff;
+  padding: 0.8rem;
+}
+
+.service-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.service-card p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .panel {
@@ -391,6 +459,13 @@ h1 {
   filter: brightness(0.98);
 }
 
+.admin-panel button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
 .pin-box > button,
 .admin-panel form > button[type="submit"] {
   background: var(--brand-strong);
@@ -507,7 +582,9 @@ h1 {
 @media (max-width: 900px) {
   .header {
     grid-template-columns: 1fr;
-    padding-top: 1.4rem;
+    padding-top: 1.1rem;
+    padding-bottom: 1.1rem;
+    gap: 1rem;
   }
 
   .split {
@@ -523,9 +600,98 @@ h1 {
   }
 
   .topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    padding: 0.6rem 5vw;
+  }
+}
+
+@media (max-width: 700px) {
+  .header {
+    padding-left: 5vw;
+    padding-right: 5vw;
   }
 
+  .main {
+    padding-left: 5vw;
+    padding-right: 5vw;
+    gap: 0.9rem;
+  }
+
+  .slideshow {
+    margin-left: 5vw;
+    margin-right: 5vw;
+    padding: 0.55rem;
+  }
+
+  .slideshow-frame {
+    height: clamp(190px, 48vw, 300px);
+  }
+
+  .hero-title {
+    font-size: clamp(1.1rem, 5.2vw, 1.35rem);
+    line-height: 1.25;
+  }
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    margin-top: 0.85rem;
+    max-width: 340px;
+  }
+
+  .btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    font-size: 1.03rem;
+  }
+
+  .hero-points {
+    padding-top: 0.9rem;
+  }
+
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .gallery img {
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.55rem;
+  }
+
+  .contact-pro {
+    padding: 1rem;
+  }
+
+  .lightbox-close {
+    top: 0.7rem;
+    right: 0.7rem;
+  }
+
+  .lightbox-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-mini img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-mini strong {
+    font-size: 1.05rem;
+  }
+
+  .brand-mini small {
+    font-size: 0.84rem;
+  }
+
+  .panel {
+    padding: 0.9rem;
+  }
 }
