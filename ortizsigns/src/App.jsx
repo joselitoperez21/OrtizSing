@@ -105,17 +105,6 @@ function saveProfile(profile) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
 }
 
-function toServiceArray(value) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function toMultiline(value) {
-  return value.join("\n");
-}
-
 function hasLegacyTechTerms(text) {
   if (!text) return false;
   return /(inform[aá]tic|soporte t[eé]cnic|computador|redes|impresoras|tecnolog[ií]a|presencia digital)/i.test(
@@ -140,8 +129,7 @@ export default function App() {
     return {
       ...initial,
       slideshowPhotos:
-        initial.slideshowPhotos ?? (initial.gallery && initial.gallery.length ? initial.gallery.slice(0, 8) : []),
-      servicesText: toMultiline(initial.services)
+        initial.slideshowPhotos ?? (initial.gallery && initial.gallery.length ? initial.gallery.slice(0, 8) : [])
     };
   });
 
@@ -198,10 +186,7 @@ export default function App() {
 
         const normalized = normalizeProfile(payload.profile);
         setProfile(normalized);
-        setForm({
-          ...normalized,
-          servicesText: toMultiline(normalized.services)
-        });
+        setForm(normalized);
         saveProfile(normalized);
       } catch {
         // Keep local fallback when API is unavailable.
@@ -333,11 +318,31 @@ export default function App() {
     setForm((prev) => ({ ...prev, slideshowPhotos: [] }));
   };
 
+  const handleServiceItemChange = (index, value) => {
+    setForm((prev) => ({
+      ...prev,
+      services: prev.services.map((item, idx) => (idx === index ? value : item))
+    }));
+  };
+
+  const handleAddServiceItem = () => {
+    setForm((prev) => ({
+      ...prev,
+      services: [...(prev.services ?? []), "Nuevo servicio"]
+    }));
+  };
+
+  const handleRemoveServiceItem = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      services: prev.services.filter((_, idx) => idx !== index)
+    }));
+  };
+
   const handleSave = async (event) => {
     event.preventDefault();
     const nextProfile = normalizeProfile({
-      ...form,
-      services: toServiceArray(form.servicesText)
+      ...form
     });
     setProfile(nextProfile);
     saveProfile(nextProfile);
@@ -610,12 +615,28 @@ export default function App() {
               </label>
 
               <label>
-                Servicios (uno por linea)
-                <textarea
-                  value={form.servicesText}
-                  onChange={(e) => handleInput("servicesText", e.target.value)}
-                />
+                Servicios
               </label>
+              <div className="service-editor-list">
+                {(form.services ?? []).map((service, index) => (
+                  <div className="service-editor-item" key={`${service}-${index}`}>
+                    <input
+                      value={service}
+                      onChange={(e) => handleServiceItemChange(index, e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="danger-action"
+                      onClick={() => handleRemoveServiceItem(index)}
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                ))}
+                <button type="button" className="secondary-action" onClick={handleAddServiceItem}>
+                  Añadir servicio
+                </button>
+              </div>
 
               <label>
                 Misión
