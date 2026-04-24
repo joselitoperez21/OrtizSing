@@ -3,28 +3,38 @@ const STORAGE_KEY = "ortizsigns_owner_profile_v1";
 const defaultProfile = {
   ownerName: "Daniel Orama",
   businessName: "Ortiz Signs",
-  heroTitle: "Señales y diseño que hacen que tu negocio se vea grande",
+  heroTitle: "Diseño, fabricación e instalación de rótulos para negocios, eventos y proyectos personalizados",
   heroText:
-    "Creamos rótulos, impresiones y diseño visual para negocios en Puerto Rico con enfoque en calidad, rapidez y atención personalizada.",
+    "En Ortiz Signs ayudamos a negocios y clientes en Puerto Rico a destacar su imagen con rótulos, diseños personalizados y trabajos visuales de calidad. Nos encargamos del proceso completo: desde la idea y el diseño, hasta la fabricación, montaje e instalación final. Cotizaciones sin compromiso y más de 30 años de experiencia.",
   aboutText:
-    "En Ortiz Signs convertimos ideas en visibilidad real. Diseñamos e instalamos soluciones de rotulación para locales, vehículos, eventos y marcas personales.",
+    "En Ortiz Signs nos especializamos en diseño, rotulación e imagen visual para negocios, eventos y proyectos personalizados. Ayudamos a nuestros clientes a darle presencia a su marca mediante trabajos creativos, profesionales y bien instalados.\n\nNos encargamos de todo el proceso: desde la idea y el diseño, hasta la producción, montaje e instalación final. Cada trabajo se realiza con atención al detalle, buscando que el resultado sea limpio, llamativo, funcional y de calidad.\n\nNuestro compromiso es ofrecer soluciones visuales que representen correctamente la identidad de cada cliente. Ya sea para un negocio nuevo, una promoción, un evento especial, un vehículo comercial o una renovación de imagen, en Ortiz Signs convertimos tus ideas en rótulos, diseños y proyectos visuales hechos para destacar.",
   services: [
     "Rótulos comerciales interiores y exteriores",
-    "Diseño gráfico para marcas y campañas",
+    "Diseño gráfico para negocios, marcas y promociones",
+    "Signs personalizados para eventos y proyectos especiales",
+    "Rotulación de vehículos comerciales",
     "Impresión en gran formato",
-    "Rotulación de vehículos y flotas",
-    "Letreros personalizados para eventos"
+    "Letras, banners, viniles y materiales promocionales",
+    "Fabricación e instalación de rótulos",
+    "Montaje profesional en el lugar del cliente"
   ],
   mission:
-    "Ofrecer soluciones visuales de alta calidad que ayuden a cada cliente a destacar su marca con claridad y estilo.",
+    "Crear soluciones visuales de calidad que ayuden a negocios y clientes a destacar su marca mediante diseño, rotulación, fabricación e instalación profesional.",
   vision:
-    "Ser el taller de rotulación más recomendado en Puerto Rico por servicio, creatividad y resultados.",
-  email: "ortizsigns@yahoo.com",
-  phone: "787-452-1800",
-  whatsapp: "17874521800",
+    "Ser una referencia local en rotulación, diseño e imagen comercial, reconocidos por la calidad de nuestros trabajos, el servicio directo y los resultados duraderos.",
+  email: "ortizsignspr@gmail.com",
+  phone: "939-638-0678",
+  whatsapp: "19396380678",
   address: "Puerto Rico",
   youtubeUrl: "https://www.youtube.com/@DanielOrama_95",
   ownerPhoto: "/img/ortizlogo.png",
+  showSlideshow: true,
+  slideshowPhotos: [
+    "/img/margarita.png",
+    "/img/OrtizDiaNacional.jpeg",
+    "/img/74490806_212125556452969_1458104898381614497_n.jpg",
+    "/img/download.png"
+  ],
   gallery: [
     "/img/margarita.png",
     "/img/OrtizDiaNacional.jpeg",
@@ -42,7 +52,30 @@ function loadProfile() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return defaultProfile;
     const parsed = JSON.parse(saved);
-    return { ...defaultProfile, ...parsed };
+    const merged = { ...defaultProfile, ...parsed };
+
+    // Backward compatibility: if old saved data doesn't include slideshowPhotos,
+    // initialize it from gallery so owner can edit the currently visible slides.
+    if (!Object.prototype.hasOwnProperty.call(parsed, "slideshowPhotos")) {
+      merged.slideshowPhotos = (merged.gallery ?? []).slice(0, 8);
+    }
+
+    if (typeof merged.showSlideshow !== "boolean") {
+      merged.showSlideshow = true;
+    }
+
+    // Update legacy contact data to current official data when old defaults are detected.
+    if (!parsed.email || parsed.email === "ortizsigns@yahoo.com") {
+      merged.email = defaultProfile.email;
+    }
+    if (!parsed.phone || parsed.phone === "787-452-1800") {
+      merged.phone = defaultProfile.phone;
+    }
+    if (!parsed.whatsapp || parsed.whatsapp === "17874521800") {
+      merged.whatsapp = defaultProfile.whatsapp;
+    }
+
+    return merged;
   } catch {
     return defaultProfile;
   }
@@ -63,23 +96,88 @@ function toMultiline(value) {
   return value.join("\n");
 }
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function App() {
   const [profile, setProfile] = useState(() => loadProfile());
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [logoTapCount, setLogoTapCount] = useState(0);
   const [pin, setPin] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState(-1);
 
-  const [form, setForm] = useState(() => ({
-    ...loadProfile(),
-    servicesText: toMultiline(loadProfile().services)
-  }));
+  const [form, setForm] = useState(() => {
+    const initial = loadProfile();
+    return {
+      ...initial,
+      slideshowPhotos:
+        initial.slideshowPhotos ?? (initial.gallery && initial.gallery.length ? initial.gallery.slice(0, 8) : []),
+      servicesText: toMultiline(initial.services)
+    };
+  });
 
   const whatsappUrl = useMemo(() => {
     const cleaned = profile.whatsapp.replace(/\D/g, "");
     return `https://wa.me/${cleaned}`;
   }, [profile.whatsapp]);
+  const phoneUrl = useMemo(() => {
+    const cleaned = profile.phone.replace(/[^\d+]/g, "");
+    return `tel:${cleaned}`;
+  }, [profile.phone]);
+
+  const slides = useMemo(() => {
+    const baseSlides = profile.slideshowPhotos ?? (profile.gallery?.slice(0, 8) ?? []);
+    if (!baseSlides.length) return ["/img/ortizlogo.png"];
+    return baseSlides;
+  }, [profile.slideshowPhotos, profile.gallery]);
+
+  const lightboxImages = useMemo(() => {
+    if (profile.gallery?.length) return profile.gallery;
+    return slides;
+  }, [profile.gallery, slides]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (activeSlide >= slides.length) {
+      setActiveSlide(0);
+    }
+  }, [activeSlide, slides.length]);
+
+  useEffect(() => {
+    if (logoTapCount === 0) return;
+    const timer = setTimeout(() => setLogoTapCount(0), 1800);
+    return () => clearTimeout(timer);
+  }, [logoTapCount]);
+
+  useEffect(() => {
+    if (lightboxIndex < 0) return;
+    const onKey = (event) => {
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "ArrowLeft") goLightbox(-1);
+      if (event.key === "ArrowRight") goLightbox(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIndex, lightboxImages.length]);
+
+  const handleLogoSecretOpen = () => {
+    setLogoTapCount((prev) => {
+      const next = prev + 1;
+      if (next >= 5) {
+        setIsAdminOpen(true);
+        return 0;
+      }
+      return next;
+    });
+  };
 
   const handleUnlock = () => {
     if (pin === "2026") {
@@ -103,6 +201,80 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
+  const handleRemoveOwnerPhoto = () => {
+    handleInput("ownerPhoto", "/img/ortizlogo.png");
+  };
+
+  const handleAddGalleryPhotos = (event) => {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setForm((prev) => ({
+          ...prev,
+          gallery: [...prev.gallery, String(reader.result)]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+    event.target.value = "";
+  };
+
+  const handleRemoveGalleryPhoto = (indexToDelete) => {
+    setForm((prev) => ({
+      ...prev,
+      gallery: prev.gallery.filter((_, index) => index !== indexToDelete)
+    }));
+  };
+
+  const handleClearGallery = () => {
+    setForm((prev) => ({ ...prev, gallery: [] }));
+  };
+
+  const handleAddSlideshowPhotos = (event) => {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setForm((prev) => ({
+          ...prev,
+          slideshowPhotos: [...(prev.slideshowPhotos ?? []), String(reader.result)]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+    event.target.value = "";
+  };
+
+  const handleRemoveSlideshowPhoto = (indexToDelete) => {
+    setForm((prev) => ({
+      ...prev,
+      slideshowPhotos: (prev.slideshowPhotos ?? []).filter((_, index) => index !== indexToDelete)
+    }));
+  };
+
+  const handleReplaceSlideshowPhoto = (indexToReplace, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((prev) => {
+        const nextSlides = [...(prev.slideshowPhotos ?? [])];
+        nextSlides[indexToReplace] = String(reader.result);
+        return { ...prev, slideshowPhotos: nextSlides };
+      });
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+
+  const handleClearSlideshowPhotos = () => {
+    setForm((prev) => ({ ...prev, slideshowPhotos: [] }));
+  };
+
   const handleSave = (event) => {
     event.preventDefault();
     const nextProfile = {
@@ -114,37 +286,94 @@ export default function App() {
     alert("Informacion guardada correctamente.");
   };
 
+  const openLightboxBySrc = (src) => {
+    const idx = lightboxImages.findIndex((img) => img === src);
+    setLightboxIndex(idx >= 0 ? idx : 0);
+  };
+
+  const closeLightbox = () => setLightboxIndex(-1);
+
+  const goLightbox = (direction) => {
+    if (!lightboxImages.length) return;
+    setLightboxIndex((prev) => {
+      const next = prev + direction;
+      if (next < 0) return lightboxImages.length - 1;
+      if (next >= lightboxImages.length) return 0;
+      return next;
+    });
+  };
+
   return (
     <>
-      <a className="yt-float" href={profile.youtubeUrl} target="_blank" rel="noreferrer">
-        YouTube
-      </a>
+      <header className="topbar">
+        <div className="brand-mini">
+          <img
+            src={profile.ownerPhoto}
+            alt={profile.ownerName}
+            onClick={handleLogoSecretOpen}
+            title="Logo"
+          />
+          <div>
+            <strong>{profile.businessName}</strong>
+            <small>{profile.ownerName}</small>
+          </div>
+        </div>
+      </header>
 
-      <header className="header">
+      <section className="header">
         <div>
-          <p className="eyebrow">Rotulacion y Diseno</p>
+          <p className="eyebrow">SIGNS, DISEÑO Y ROTULACIÓN PROFESIONAL</p>
           <h1>{profile.businessName}</h1>
           <p className="hero-title">{profile.heroTitle}</p>
           <p className="hero-text">{profile.heroText}</p>
           <div className="hero-actions">
             <a className="btn btn-primary" href={whatsappUrl} target="_blank" rel="noreferrer">
-              WhatsApp
+              Solicitar cotización
             </a>
-            <a className="btn btn-secondary" href={profile.youtubeUrl} target="_blank" rel="noreferrer">
-              Ver canal de YouTube
+            <a className="btn btn-secondary" href="#galeria">
+              Ver trabajos
             </a>
           </div>
         </div>
-        <div className="owner-card">
-          <img src={profile.ownerPhoto} alt={profile.ownerName} />
-          <h2>{profile.ownerName}</h2>
-          <p>Propietario</p>
+        <div className="hero-points panel">
+          <h2>Qué hacemos</h2>
+          <ul>
+            <li>Diseño de rótulos según la identidad de tu negocio</li>
+            <li>Fabricación de signs con materiales de calidad</li>
+            <li>Rotulación comercial interior y exterior</li>
+            <li>Instalación profesional en negocios, oficinas, vehículos y eventos</li>
+            <li>Diseños personalizados para promociones, marcas y proyectos especiales</li>
+            <li>Atención directa para cotización y seguimiento</li>
+          </ul>
         </div>
-      </header>
+      </section>
+
+      {profile.showSlideshow !== false && (
+        <section className="slideshow panel">
+          <div className="slideshow-frame">
+            <img
+              src={slides[activeSlide]}
+              alt="Trabajo destacado"
+              onClick={() => openLightboxBySrc(slides[activeSlide])}
+            />
+          </div>
+          <div className="slideshow-dots">
+            {slides.map((src, idx) => (
+              <button
+                key={src + idx}
+                type="button"
+                className={idx === activeSlide ? "dot active" : "dot"}
+                onClick={() => setActiveSlide(idx)}
+                aria-label={`Ir a imagen ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <main className="main">
         <section className="panel">
-          <h2>Quienes somos</h2>
+          <h2>Quiénes somos</h2>
           <p>{profile.aboutText}</p>
         </section>
 
@@ -159,46 +388,93 @@ export default function App() {
 
         <section className="panel split">
           <article>
-            <h2>Mision</h2>
+            <h2>Misión</h2>
             <p>{profile.mission}</p>
           </article>
           <article>
-            <h2>Vision</h2>
+            <h2>Visión</h2>
             <p>{profile.vision}</p>
           </article>
         </section>
 
-        <section className="panel">
-          <h2>Galeria</h2>
+        <section className="panel" id="galeria">
+          <h2>Galería</h2>
           <div className="gallery">
             {profile.gallery.map((src) => (
-              <img key={src} src={src} alt="Trabajo de Ortiz Signs" loading="lazy" />
+              <img
+                key={src}
+                src={src}
+                alt="Trabajo de Ortiz Signs"
+                loading="lazy"
+                onClick={() => openLightboxBySrc(src)}
+              />
             ))}
           </div>
         </section>
 
-        <section className="panel contact">
-          <h2>Contacto</h2>
-          <p>
-            Email: <a href={`mailto:${profile.email}`}>{profile.email}</a>
-          </p>
-          <p>
-            Telefono: <a href={`tel:${profile.phone}`}>{profile.phone}</a>
-          </p>
-          <p>Direccion: {profile.address}</p>
-          <p>
-            YouTube: <a href={profile.youtubeUrl}>{profile.youtubeUrl}</a>
-          </p>
+        <section className="panel contact-pro">
+          <div className="contact-head">
+            <h2>Contacto</h2>
+            <p>Nos especializamos en toda clase de rótulos. Cotizaciones sin compromiso.</p>
+          </div>
+          <div className="contact-grid">
+            <div className="contact-list">
+              <article className="contact-item">
+                <span className="contact-label">Email</span>
+                <a href={`mailto:${profile.email}`}>{profile.email}</a>
+              </article>
+              <article className="contact-item">
+                <span className="contact-label">Telefono</span>
+                <a href={phoneUrl}>{profile.phone}</a>
+              </article>
+              <article className="contact-item">
+                <span className="contact-label">WhatsApp</span>
+                <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                  {profile.phone}
+                </a>
+              </article>
+              <article className="contact-item">
+                <span className="contact-label">Direccion</span>
+                <p>{profile.address}</p>
+              </article>
+              <article className="contact-item">
+                <span className="contact-label">YouTube</span>
+                <a href={profile.youtubeUrl} target="_blank" rel="noreferrer">
+                  @DanielOrama_95
+                </a>
+              </article>
+              <article className="contact-item">
+                <span className="contact-label">Instagram</span>
+                <a href="https://www.instagram.com/ortizsignspr/?hl=es" target="_blank" rel="noreferrer">
+                  @ortizsignspr
+                </a>
+              </article>
+              <article className="contact-item">
+                <span className="contact-label">Facebook</span>
+                <a href="https://www.facebook.com/ortizsignspr" target="_blank" rel="noreferrer">
+                  facebook.com/ortizsignspr
+                </a>
+              </article>
+            </div>
+          </div>
         </section>
       </main>
 
-      <button className="admin-toggle" onClick={() => setIsAdminOpen((prev) => !prev)}>
-        Panel del dueno
-      </button>
-
       {isAdminOpen && (
         <aside className="admin-panel">
-          <h3>Editar contenido</h3>
+          <div className="admin-head">
+            <h3>Editar contenido</h3>
+            <button
+              type="button"
+              className="admin-close"
+              onClick={() => setIsAdminOpen(false)}
+              aria-label="Cerrar panel"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6L18 18M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
           {!isUnlocked ? (
             <div className="pin-box">
               <p>PIN de acceso</p>
@@ -209,7 +485,6 @@ export default function App() {
                 placeholder="PIN"
               />
               <button onClick={handleUnlock}>Entrar</button>
-              <small>PIN por defecto: 2026 (cambialo luego en codigo).</small>
             </div>
           ) : (
             <form onSubmit={handleSave}>
@@ -222,7 +497,7 @@ export default function App() {
               </label>
 
               <label>
-                Nombre del dueno
+                Nombre del dueño
                 <input value={form.ownerName} onChange={(e) => handleInput("ownerName", e.target.value)} />
               </label>
 
@@ -237,7 +512,7 @@ export default function App() {
               </label>
 
               <label>
-                Quienes somos
+                Quiénes somos
                 <textarea value={form.aboutText} onChange={(e) => handleInput("aboutText", e.target.value)} />
               </label>
 
@@ -250,12 +525,12 @@ export default function App() {
               </label>
 
               <label>
-                Mision
+                Misión
                 <textarea value={form.mission} onChange={(e) => handleInput("mission", e.target.value)} />
               </label>
 
               <label>
-                Vision
+                Visión
                 <textarea value={form.vision} onChange={(e) => handleInput("vision", e.target.value)} />
               </label>
 
@@ -284,15 +559,140 @@ export default function App() {
                 <input value={form.youtubeUrl} onChange={(e) => handleInput("youtubeUrl", e.target.value)} />
               </label>
 
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={form.showSlideshow !== false}
+                  onChange={(e) => handleInput("showSlideshow", e.target.checked)}
+                />
+                Mostrar slideshow en la pagina
+              </label>
+
               <label>
-                Foto del dueno
+                Agregar fotos al slideshow
+                <input type="file" accept="image/*" multiple onChange={handleAddSlideshowPhotos} />
+              </label>
+              <details className="media-collapse" open>
+                <summary>
+                  Fotos del slideshow ({form.slideshowPhotos?.length ?? 0})
+                </summary>
+                {form.slideshowPhotos?.length > 0 ? (
+                  <div className="gallery-admin-list">
+                    {form.slideshowPhotos.map((src, index) => (
+                      <div key={`${src}-${index}-slide`} className="gallery-admin-item">
+                        <img src={src} alt={`Slideshow ${index + 1}`} />
+                        <div className="admin-photo-actions">
+                          <label className="secondary-action compact-file">
+                            Reemplazar
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleReplaceSlideshowPhoto(index, e)}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="danger-action"
+                            onClick={() => handleRemoveSlideshowPhoto(index)}
+                          >
+                            Borrar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <small>No hay fotos en el slideshow.</small>
+                )}
+              </details>
+              <button type="button" className="danger-action" onClick={handleClearSlideshowPhotos}>
+                Borrar todas las fotos del slideshow
+              </button>
+
+              <label>
+                Foto del dueño
                 <input type="file" accept="image/*" onChange={handlePhoto} />
               </label>
+              <button type="button" className="secondary-action" onClick={handleRemoveOwnerPhoto}>
+                Quitar foto del dueño
+              </button>
+
+              <label>
+                Agregar fotos a galeria
+                <input type="file" accept="image/*" multiple onChange={handleAddGalleryPhotos} />
+              </label>
+              <details className="media-collapse">
+                <summary>
+                  Fotos de galeria ({form.gallery.length})
+                </summary>
+                {form.gallery.length > 0 ? (
+                  <div className="gallery-admin-list">
+                    {form.gallery.map((src, index) => (
+                      <div key={`${src}-${index}`} className="gallery-admin-item">
+                        <img src={src} alt={`Galería ${index + 1}`} />
+                        <button
+                          type="button"
+                          className="danger-action"
+                          onClick={() => handleRemoveGalleryPhoto(index)}
+                        >
+                          Borrar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <small>No hay fotos en la galeria.</small>
+                )}
+              </details>
+              <button type="button" className="danger-action" onClick={handleClearGallery}>
+                Borrar todas las fotos
+              </button>
 
               <button type="submit">Guardar cambios</button>
             </form>
           )}
         </aside>
+      )}
+
+      {lightboxIndex >= 0 && (
+        <div className="lightbox" role="dialog" aria-modal="true" onClick={closeLightbox}>
+          <button
+            type="button"
+            className="lightbox-close"
+            onClick={closeLightbox}
+            aria-label="Cerrar imagen"
+          >
+            ×
+          </button>
+          <button
+            type="button"
+            className="lightbox-nav lightbox-prev"
+            onClick={(e) => {
+              e.stopPropagation();
+              goLightbox(-1);
+            }}
+            aria-label="Imagen anterior"
+          >
+            ‹
+          </button>
+          <img
+            src={lightboxImages[lightboxIndex]}
+            alt="Vista completa"
+            className="lightbox-image"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            className="lightbox-nav lightbox-next"
+            onClick={(e) => {
+              e.stopPropagation();
+              goLightbox(1);
+            }}
+            aria-label="Siguiente imagen"
+          >
+            ›
+          </button>
+        </div>
       )}
     </>
   );
