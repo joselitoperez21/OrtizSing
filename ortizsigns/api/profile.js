@@ -1,6 +1,5 @@
-import { list, put } from "@vercel/blob";
-
-const PROFILE_PATH = "ortizsigns/profile.json";
+const PROFILE_ID = "main";
+const TABLE = process.env.SUPABASE_PROFILE_TABLE || "site_profile";
 
 function readRequestBody(req) {
   if (!req.body) return {};
@@ -14,20 +13,56 @@ function readRequestBody(req) {
   return req.body;
 }
 
-async function readStoredProfile() {
-  const result = await list({ prefix: PROFILE_PATH, limit: 10 });
-  const blob = result.blobs.find((item) => item.pathname === PROFILE_PATH) ?? result.blobs[0];
-  if (!blob) return null;
+function getSupabaseConfig() {
+  const url = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) return null;
+  return { url, serviceKey };
+}
 
-  const response = await fetch(blob.url, { cache: "no-store" });
+async function getProfileFromSupabase({ url, serviceKey }) {
+  const endpoint = `${url}/rest/v1/${TABLE}?id=eq.${PROFILE_ID}&select=profile&limit=1`;
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`
+    }
+  });
+
   if (!response.ok) return null;
-  return response.json();
+  const rows = await response.json();
+  return rows?.[0]?.profile ?? null;
+}
+
+async function upsertProfileToSupabase({ url, serviceKey }, profile) {
+  const endpoint = `${url}/rest/v1/${TABLE}`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      Prefer: "resolution=merge-duplicates,return=minimal"
+    },
+    body: JSON.stringify([{ id: PROFILE_ID, profile }])
+  });
+
+  return response.ok;
 }
 
 export default async function handler(req, res) {
+  const supabase = getSupabaseConfig();
+  if (!supabase) {
+    return res.status(500).json({
+      error:
+        "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in Vercel environment variables."
+    });
+  }
+
   if (req.method === "GET") {
     try {
-      const profile = await readStoredProfile();
+      const profile = await getProfileFromSupabase(supabase);
       return res.status(200).json({ profile });
     } catch {
       return res.status(200).json({ profile: null });
@@ -50,16 +85,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    await put(PROFILE_PATH, JSON.stringify(payload.profile), {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "application/json"
-    });
-
+    const ok = await upsertProfileToSupabase(supabase, payload.profile);
+    if (!ok) {
+      return res.status(500).json({ error: "Supabase upsert failed." });
+    }
     return res.status(200).json({ ok: true });
   } catch {
-    return res.status(500).json({
-      error: "Global save failed. Configure BLOB_READ_WRITE_TOKEN in Vercel."
-    });
+    return res.status(500).json({ error: "Supabase write failed." });
   }
 }
