@@ -1,5 +1,6 @@
 const STORAGE_KEY = "ortizsigns_owner_profile_v1";
 const API_PROFILE_ENDPOINT = "/api/profile";
+const DEFAULT_OWNER_PHOTO = "/img/ortizlogo.png";
 
 const defaultProfile = {
   ownerName: "Daniel Orama",
@@ -29,7 +30,7 @@ const defaultProfile = {
   address: "Puerto Rico",
   mapEmbedUrl: "",
   youtubeUrl: "https://www.youtube.com/@DanielOrama_95",
-  ownerPhoto: "/img/ortizlogo.png",
+  ownerPhoto: DEFAULT_OWNER_PHOTO,
   showSlideshow: true,
   slideshowPhotos: [
     "/img/margarita.png",
@@ -51,8 +52,11 @@ const defaultProfile = {
 
 function normalizeProfile(raw) {
   const merged = { ...defaultProfile, ...(raw ?? {}) };
+  const isAllowedOwnerPhoto =
+    typeof merged.ownerPhoto === "string" && /^\/img\/[^?#]+\.(png|jpe?g|webp|gif)$/i.test(merged.ownerPhoto);
   return {
     ...merged,
+    ownerPhoto: isAllowedOwnerPhoto ? merged.ownerPhoto : DEFAULT_OWNER_PHOTO,
     services: Array.isArray(merged.services) ? merged.services : defaultProfile.services,
     gallery: Array.isArray(merged.gallery) ? merged.gallery : defaultProfile.gallery,
     slideshowPhotos: Array.isArray(merged.slideshowPhotos)
@@ -245,7 +249,7 @@ export default function App() {
   };
 
   const handleRemoveOwnerPhoto = () => {
-    handleInput("ownerPhoto", "/img/ortizlogo.png");
+    handleInput("ownerPhoto", DEFAULT_OWNER_PHOTO);
   };
 
   const handleAddGalleryPhotos = (event) => {
