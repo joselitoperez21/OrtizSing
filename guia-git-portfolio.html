@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guia Git para Subir tu Portfolio</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.55; color: #111827; margin: 36px; }
+    h1, h2 { color: #0b1b3a; }
+    code { background: #e2e8f0; color: #0f172a; padding: 2px 6px; border-radius: 4px; }
+    pre { background: #0b1220; color: #f8fafc; padding: 14px; border-radius: 8px; overflow-x: auto; border: 1px solid #1e293b; }
+    pre code { background: transparent; color: #f8fafc; padding: 0; }
+    .note { background: #ecfeff; border-left: 4px solid #06b6d4; padding: 10px; }
+    ul { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <h1>Guia rapida: subir tu portfolio a GitHub con Git</h1>
+  <p><strong>Proyecto:</strong> <code>mi-resume-web</code></p>
+
+  <h2>1) Ir a la carpeta del proyecto</h2>
+  <pre><code>cd C:\Users\josel\Desktop\mi-resume-web</code></pre>
+
+  <h2>2) Inicializar Git</h2>
+  <pre><code>git init</code></pre>
+
+  <h2>3) Configurar usuario (solo la primera vez en tu PC)</h2>
+  <pre><code>git config --global user.name "Jose Perez Maysonet"
+git config --global user.email "perezjose210100@gmail.com"</code></pre>
+
+  <h2>4) Ver estado y agregar archivos</h2>
+  <pre><code>git status
+git add .</code></pre>
+
+  <h2>5) Hacer commit</h2>
+  <pre><code>git commit -m "Create modern resume portfolio with React, Tailwind and animations"</code></pre>
+
+  <h2>6) Crear repositorio en GitHub</h2>
+  <ul>
+    <li>Entra a GitHub y crea un repo nuevo (por ejemplo: <code>mi-resume-web</code>).</li>
+    <li>No marques README si ya tienes proyecto local.</li>
+  </ul>
+
+  <h2>7) Conectar remoto y subir</h2>
+  <p>Reemplaza <code>TU_USUARIO</code> y <code>TU_REPO</code>:</p>
+  <pre><code>git branch -M main
+git remote add origin https://github.com/TU_USUARIO/TU_REPO.git
+git push -u origin main</code></pre>
+
+  <h2>8) Para futuras actualizaciones</h2>
+  <pre><code>git add .
+git commit -m "Describe aqui el cambio"
+git push</code></pre>
+
+  <h2>Errores comunes</h2>
+  <ul>
+    <li><code>not a git repository</code>: estas en la carpeta incorrecta o falta <code>git init</code>.</li>
+    <li><code>remote origin already exists</code>: usa <code>git remote set-url origin URL</code>.</li>
+    <li><code>failed to push</code>: haz <code>git pull --rebase origin main</code> y vuelve a subir.</li>
+  </ul>
+
+  <div class="note">
+    Consejo profesional: no es hacerlo perfecto sin ayuda; es entender el flujo y poder repetirlo con seguridad.
+  </div>
+</body>
+</html>
